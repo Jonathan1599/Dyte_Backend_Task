@@ -21,12 +21,17 @@ const microservicesBroker = new ServiceBroker({
 
 //Express app settings and routes
 const app = express();
+app.use(express.json())
 const port = 3000;
 app.get('/list',(req,res,next) =>{
    microservicesBroker.call("webhooks.list",null,)
    .then(resp => res.send(resp))
    .catch(err => res.send(err));
 
+})
+.get('/register',(req,res,next) =>{
+  microservicesBroker.call("webhooks.register",{ targetUrl: req.body.targetUrl})
+  .then(resp => res.send("ID received for "+ req.body.targetUrl + " is " + resp))
 })
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`)
@@ -53,7 +58,7 @@ microservicesBroker.createService({
   actions:{
             register(ctx){
             let id ="";
-            let entry =  new URL({targetUrl : "https://jsonplaceholder.typicode.com/posts"});
+            let entry =  new URL({targetUrl : ctx.params.targetUrl});
             id = entry.save()
             .then( (url) => {
               id = url._id;
