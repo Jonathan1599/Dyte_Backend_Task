@@ -1,6 +1,7 @@
 const { ServiceBroker } = require("moleculer");
 const HTTPServer = require("moleculer-web");
 //const axios = require('axios');
+const express = require("express");
 const request = require('request');
 const async = require('async');
 const mongoose = require("mongoose");
@@ -18,9 +19,23 @@ const microservicesBroker = new ServiceBroker({
   transporter: null
 });
 
+//Express app settings and routes
+const app = express();
+const port = 3000;
+app.get('/list',(req,res,next) =>{
+   microservicesBroker.call("webhooks.list",null,)
+   .then(resp => res.send(resp))
+   .catch(err => res.send(err));
+
+})
+app.listen(port, () => {
+  console.log(`Example app listening at http://localhost:${port}`)
+})
+
+// microservice settings and functionalities
 microservicesBroker.createService({
   name: "webhooks",
-  mixins: [HTTPServer],
+  mixins: [],
   settings: {
     port: process.env.PORT || 4000,
     routes: [
