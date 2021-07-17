@@ -12,6 +12,8 @@ This is the Dyte_backend Task created using Express and Molecular to create a we
 
 ## Usage
 Start the project by running `node index`. 
-After starting, open the http://localhost:3000/ URL in your browser and go to the respective routes mentioned in the google [document](https://docs.google.com/document/d/1cN0au0gnahbOLabRfVyJm4brcBZq-HQCvEeNO_kJY-g/edit?usp=sharing).
+After starting, open the http://localhost:3000/ URL in your browser and go to the respective routes mentioned in the **Google Document** [link](https://docs.google.com/document/d/1cN0au0gnahbOLabRfVyJm4brcBZq-HQCvEeNO_kJY-g/edit?usp=sharing).
 
+## Google Doc Link
+ [Link](https://docs.google.com/document/d/1cN0au0gnahbOLabRfVyJm4brcBZq-HQCvEeNO_kJY-g/edit?usp=sharing) (Same as above)
 
