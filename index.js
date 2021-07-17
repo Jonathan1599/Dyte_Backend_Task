@@ -32,9 +32,20 @@ app.get('/list',(req,res,next) =>{
 .get('/register',(req,res,next) =>{
   microservicesBroker.call("webhooks.register",{ targetUrl: req.body.targetUrl})
   .then(resp => res.send("ID received for "+ req.body.targetUrl + " is " + resp))
+  .catch(err => res.send(err))
+})
+.get('/update',(req,res) =>{
+  microservicesBroker.call("webhooks.update",{id : req.body.id, newTargetUrl : req.body.newTargetUrl})
+  .then( resp => res.send("id:" + req.body.id+ " set to " + req.body.newTargetUrl + " successfully " ))
+  .catch(err => res.send(err))
+})
+.get('/ip', (req, res) =>{
+  microservicesBroker.call("webhooks.trigger",{ip : req.ip})
+  .then( () => { res.send("All webhooks triggerre")  })
+  .catch( (err) => res.send(err))
 })
 app.listen(port, () => {
-  console.log(`Example app listening at http://localhost:${port}`)
+  console.log(`Webhooks Microservices app listening at http://localhost:${port}`)
 })
 
 // microservice settings and functionalities
@@ -71,7 +82,7 @@ microservicesBroker.createService({
 
             async update(ctx){
               try{
-              await URL.updateOne({_id : "60f1d3d8e90c783d1ccebd40"}, { targetUrl: "www.youtube.com" });
+              await URL.updateOne({_id : ctx.params.id}, { targetUrl: ctx.params.newTargetUrl });
               return "URL updated";
               }
               catch(err){
@@ -103,6 +114,8 @@ microservicesBroker.createService({
               {
                 let sp = vals.splice(0,3);
                 async.map(sp, function(link,callback) { 
+                  if(link.includes("http://") == false && link.includes("https://") == false)
+                    link  = "https://"  + link
                     request({
                       url: link,
                       method: "POST",
@@ -110,10 +123,11 @@ microservicesBroker.createService({
                           "Content-Type": "application/json"
                       },
                       json: { 
-                        ipAddress: "192.168.1.1"
+                        ipAddress: ctx.ip
                       }
-                    },(err,res,data) => {if(res.statusCode == 201) count = count+1})
+                    },(err,res,data,ext) => {if(res.statusCode == 201) callback(null,"done")})
                   },function(err,res,data) {
+                   console.log(res)
                   count = count + 1
                   console.log(count)
                     });
