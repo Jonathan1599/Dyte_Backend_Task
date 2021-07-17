@@ -32,17 +32,29 @@ app.get('/list',(req,res,next) =>{
 .get('/register',(req,res,next) =>{
   microservicesBroker.call("webhooks.register",{ targetUrl: req.body.targetUrl})
   .then(resp => res.send("ID received for "+ req.body.targetUrl + " is " + resp))
-  .catch(err => res.send(err))
+  .catch(err => res.send(err));
 })
 .get('/update',(req,res) =>{
   microservicesBroker.call("webhooks.update",{id : req.body.id, newTargetUrl : req.body.newTargetUrl})
   .then( resp => res.send("id:" + req.body.id+ " set to " + req.body.newTargetUrl + " successfully " ))
-  .catch(err => res.send(err))
+  .catch(err => res.send(err));
 })
 .get('/ip', (req, res) =>{
   microservicesBroker.call("webhooks.trigger",{ip : req.ip})
-  .then( () => { res.send("All webhooks triggerre")  })
-  .catch( (err) => res.send(err))
+  .then( () =>  res.send("All webhooks triggered") )
+  .catch( (err) => res.send(err));
+})
+.get('/delete', (req, res) =>{
+  microservicesBroker.call("webhooks.delete", {id : req.body.id})
+  .then( (url) => {
+    if(url != undefined)
+    res.send(req.body.id + " deleted successfully") ;
+    else
+    res.send("Invalid id")
+    }) 
+
+  .catch( (err) => {
+    res.send(err)});
 })
 app.listen(port, () => {
   console.log(`Webhooks Microservices app listening at http://localhost:${port}`)
@@ -51,21 +63,6 @@ app.listen(port, () => {
 // microservice settings and functionalities
 microservicesBroker.createService({
   name: "webhooks",
-  mixins: [],
-  settings: {
-    port: process.env.PORT || 4000,
-    routes: [
-      {
-        aliases: {
-          "GET /register": "webhooks.register",
-          "GET /update"  : "webhooks.update",
-          "GET /list"    : "webhooks.list",   
-          "GET /trigger" : "webhooks.trigger"
-        }
-      }
-    ]
-  },
- 
   actions:{
             register(ctx){
             let id ="";
@@ -92,27 +89,42 @@ microservicesBroker.createService({
 
             async list(ctx){
                 let docs = await URL.find({});
-                let vals = [];
+                let urls = [];
                 docs.forEach( (obj) => {
-                  vals.push({ "id" : obj._id, "targetUrl" : obj.targetUrl})
+                  urls.push({ "id" : obj._id, "targetUrl" : obj.targetUrl})
                 })
-                return ({list : vals});
+                return ({list : urls});
+            },
+
+            async delete(ctx)
+            {
+                let entry
+                let check = await  URL.find({_id : ctx.params.id}) ;
+                if(check.length == 0)
+                    return null;
+                URL.findByIdAndDelete({_id: ctx.params.id})
+                .then( (doc) => {
+                  entry = doc.targetUrl;
+            })
+                .catch( err =>  err);
+                console.log(entry)
+                return ctx.params.id;
             },
 
             async trigger(ctx){
               try {
               let docs = await URL.find({});
               
-              let vals = [];
+              let urls = [];
               docs.forEach( (obj) => {
 
-                vals.push(obj.targetUrl)
+                urls.push(obj.targetUrl)
               })
               let count =0;
               let c
-              while(vals.length !== 0)
+              while(urls.length !== 0)
               {
-                let sp = vals.splice(0,3);
+                let sp = urls.splice(0,10);
                 async.map(sp, function(link,callback) { 
                   if(link.includes("http://") == false && link.includes("https://") == false)
                     link  = "https://"  + link
@@ -125,7 +137,7 @@ microservicesBroker.createService({
                       json: { 
                         ipAddress: ctx.ip
                       }
-                    },(err,res,data,ext) => {if(res.statusCode == 201) callback(null,"done")})
+                    },(err,res,data,ext) => { callback(null,"done")})
                   },function(err,res,data) {
                    console.log(res)
                   count = count + 1
